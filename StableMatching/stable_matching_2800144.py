@@ -1,4 +1,5 @@
 import sys
+from collections import deque
 
 def preferenceCheck(numPeople, preferenceList, womanI, manI, currentPartnerI) :
     '''
@@ -8,9 +9,13 @@ def preferenceCheck(numPeople, preferenceList, womanI, manI, currentPartnerI) :
     for i in range(numPeople) :
         if(preferenceList[womanI][i] == currentPartnerI) :
             return 1
-        
+        #endif
+
         if(preferenceList[womanI][i] == manI) :
             return 0
+        #endif
+    #endfor
+#enddef
 
     
 def stableMatching(numMenWomenI, menPrefList, womenPrefList) :
@@ -23,56 +28,60 @@ def stableMatching(numMenWomenI, menPrefList, womenPrefList) :
 
     The values are shifted down by one for easy indexing in the menPrefList and womenPrefList.
     '''
-    ## Number of free people
-    freeCount = numMenWomenI
 
     ## Stores partner of women.
-    wPartner = [None] * numMenWomenI
+    wPartner = [(0, False)] * numMenWomenI
     
     ## Stores availability of men.
-    mFree = [None] * numMenWomenI
+    mFree = deque()
+    for x in range(numMenWomenI):
+        mFree.append(x)
+    #endfor
 
     ## Stores engaged pairs
     engaged = []
     
-    while(freeCount > 0) :
+    i = 0
+    while(mFree):
 
-        ## Get the first free man
-        for m in range(numMenWomenI) :
-            if(mFree[m] == None) :
-                break
-        
-        ## Go through m's preferences
-        for i in range(numMenWomenI) :
-            if (mFree[m] != None) :
-                break
-            
-            ## Highest-ranked in m's preferences
-            w = menPrefList[m][i]
+        # Get the first free man
+        m = mFree.popleft()
+        mList = menPrefList[m]
 
-            ## If w is free, engage(m, w)
-            if(wPartner[w-(numMenWomenI)] == None) :
-                wPartner[w-(numMenWomenI)] = m 
-                mFree[m] = w
+        # Highest-ranked in m's preferences
+        w = mList[i]
+        # print("Chose Female", w)
+
+        # If the woman is free, engage m and w
+        if(wPartner[w][1] == False) :
+            wPartner[w] = (m, True)
+            engaged.append([m, w])
+            i = 0
+        # If the woman is not free, check her preference list
+        else:
+            # Get current partner
+            m1 = wPartner[w][0]
+
+            # Get the indicies of current partner and new man
+            m1index = womenPrefList[w].index(m1)
+            mindex = womenPrefList[w].index(m)
+
+            # If the new man's index is less, then switch engagement and free the current partner
+            if(mindex < m1index):
+                wPartner[w] = (m, True)
+                mFree.appendleft(m1)
                 engaged.append([m, w])
-                freeCount = freeCount - 1
-            else :
-                m1 = wPartner[w-(numMenWomenI)]
+                engaged.remove([m1, w])
+                i = 0
+            else:
+                mFree.appendleft(m)
+                i = i + 1
+            #endif
+        #endifelse
+    #endwhile
 
-                if(preferenceCheck(numMenWomenI, womenPrefList, w, m, m1) == 0) :
-                    wPartner[w-(numMenWomenI)] = m 
-                    mFree[m] = w
-                    mFree[m1] = None
-                    engaged.append([m, w])
-                    engaged.remove(engaged[m1])
-    
-    
-    for i in range(numMenWomenI) :
-        engaged[i][0] = engaged[i][0] + 1
-        engaged[i][1] = engaged[i][1] + 1
-
-    engaged.sort()
     return (engaged)
+#enddef
 
 def main() :
     menPrefList = []
@@ -84,44 +93,60 @@ def main() :
         sys.exit(0)
     else : 
         with open(sys.argv[1]) as f :
-            slurp = f.read(2)
-            if(slurp[1].isdigit()) :
-                numOfPeopleI = int(slurp)
-                slurp = f.read()
-                #print('if')
-                slurp = slurp.replace('\r\n','')
-                slurp = slurp.replace(',', '')
-                #print(slurp)
-            else :
-                numOfPeopleI = int(slurp[0])
-                slurp = f.read()
-                slurp = slurp.replace('\r\n', '')
-                slurp = slurp.replace(',', '')
-                slurp = slurp[1:len(slurp)]
+            matches = f.readline().strip()
+            numOfPeopleI = int(matches)
 
-        ## Get the preference list for all the men
-        for i in range(numOfPeopleI) :
-            man = []
+            #Read space between 
+            lineSpace = f.readline()
 
-            for j in range(numOfPeopleI) :
-                man.append(int(slurp[0]) - 1)
-                slurp = slurp[1:]
+            ## Get the preference list for all the men
+            for i in range(numOfPeopleI) :
+                man = []
+                menchoices = f.readline().split(',')
+
+                for j in range(len(menchoices)) :
+                    man.append(int(menchoices[j]))
+                #endfor
+
+                menPrefList.append(man)
+            #endfor
             
-            
-            menPrefList.append(man)
-        
-        ## Get the preference list for all the women
-        for i in range(numOfPeopleI) :
-            woman = []
+            #Read space between 
+            lineSpace = f.readline()
 
-            for j in range(numOfPeopleI) :
-                woman.append(int(slurp[0]) - 1)
-                slurp = slurp[1:]
+            ## Get the preference list for all the women
+            for i in range(numOfPeopleI) :
+                woman = []
+                womenchoices = f.readline().split(',')
 
-            womenPrefList.append(woman)
+                for j in range(len(womenchoices)) :
+                    woman.append(int(womenchoices[j]))
+                #endfor
+
+                womenPrefList.append(woman)
+            #endfor
+        #endwith
+    #endelse
+
+    # Shift the numbers to index array easier
+    for i in range(numOfPeopleI):
+        for j in range(numOfPeopleI):
+            menPrefList[i][j] = menPrefList[i][j] - 1
+            womenPrefList[i][j] = womenPrefList[i][j] - 1
+        #endfor
+    #endfor
             
     matches = stableMatching(numOfPeopleI, menPrefList, womenPrefList)
-    print(matches)
+    for i in range(len(matches)):
+        matches[i][0] = matches[i][0] + 1
+        matches[i][1] = matches[i][1] + 1
+    #endfor
+
+    matches.sort()
+    for i in range(len(matches)):
+        print(str(matches[i][0]) + ', ' + str(matches[i][1]), end="\r\n")
+    #endfor
+#enddef
 
 
 if __name__ == '__main__' :
