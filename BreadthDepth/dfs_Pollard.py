@@ -1,5 +1,6 @@
 import sys
 from collections import defaultdict
+from collections import deque
 import pprint
 
 graph = defaultdict(list)
@@ -12,8 +13,14 @@ def main():
         print('Try: python dfs_Pollard.py inputfile.txt')
         sys.exit(0)
     else:
+        root = 0
         with open(sys.argv[1]) as f :
-            head = f.readline().strip()
+            slurpLine = f.readline().strip()
+
+            try:
+                root = int(slurpLine)
+            except:
+                print("Could not parse integer into graph")
 
             for line in f :
                 line = line.strip().split(", ")
@@ -22,29 +29,32 @@ def main():
                 except:
                     print("Could not parse integer into graph")
 
-        depthFirstSearch(int(head))
+        depthFirstSearch(root)
 
 
 def depthFirstSearch(s) :
-    explored = [False] * (max(graph) * 2)
+    explored = [False] * (len(graph))
 
     #Initialize S to be a stack with one element s
-    stack = [s]
+    stack = []
+    stack.append(s)
+
+    tree = []
 
     while stack :
-        #Take a node u from stack
-        u = stack.pop(0)
-        print(u)
+
+        #Take a node
+        u = stack.pop()
 
         if explored[u] == False :
             explored[u] = True
+            tree.append(u)
 
-            for v in graph[u] :
-                stack.append(v)
-            #rof
-        #fi
-    #elihw
-#fed
+            for v in range(len(graph[u])-1, -1, -1) :
+                stack.append(graph[u][v])
+    
+    for i in tree:
+        print(i, end=" ")
 
 
 if __name__ == '__main__':

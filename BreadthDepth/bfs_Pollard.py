@@ -11,10 +11,12 @@ def main() :
         print('Try: python stable_matching_2800144.py inputfile.txt')
         sys.exit(0)
     else :
+        root = 0
         with open(sys.argv[1]) as f :
             slurpLine = f.readline().strip()
 
             try :
+                root = int(slurpLine)
                 graph[int(slurpLine)].append(int(slurpLine))
             except :
                 print("Could not parse integer into graph")
@@ -25,7 +27,8 @@ def main() :
                     graph[int(line[0])].append(int(line[1]))
                 except :
                     print("Could not parse integer into graph")
-        breadthFirstSearch(graph[0][0])
+        
+        breadthFirstSearch(root)
 
 
 def breadthFirstSearch(s):
@@ -44,7 +47,11 @@ def breadthFirstSearch(s):
                 discovered[v] = True
                 layers.append(v)
     
-    print(tree)
+    for i in range(len(tree) - 1):
+        print(str(tree[i]), end=" ")
+    #endfor
+
+    print(str(tree[len(tree) - 1]), end="")
     
 
 
